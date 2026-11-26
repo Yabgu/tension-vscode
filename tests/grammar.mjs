@@ -108,6 +108,213 @@ export const ASSERTIONS = [
     mode: "added",
   },
 
+  // ══ EXT2: the vocabulary the compiler has, and the grammar lacked ══════════
+
+  // ── the decorators, by family (12 compiler names in 15 spellings) ──────────
+  // Justification: `DecoratorKind.fromNode`, TensionScript/src/ast.ts:1279-1360.
+  // Fixture: tests/fixtures/decorators.tension, which COMPILES except where noted.
+  {
+    name: "@unmanaged is a memory modifier",
+    file: "decorators.tension", line: 29, text: "unmanaged", nth: 1,
+    scope: "storage.modifier.memory.unmanaged.tension",
+    mode: "added",
+  },
+  {
+    name: "@managed is a memory modifier",
+    file: "decorators.tension", line: 56, text: "managed", nth: 1,
+    scope: "storage.modifier.memory.managed.tension",
+    mode: "added",
+  },
+  {
+    name: "@inline is a memory modifier",
+    file: "decorators.tension", line: 31, text: "inline", nth: 1,
+    scope: "storage.modifier.memory.inline.tension",
+    mode: "added",
+  },
+  {
+    name: "@lazy is a memory modifier",
+    file: "decorators.tension", line: 32, text: "lazy", nth: 1,
+    scope: "storage.modifier.memory.lazy.tension",
+    mode: "added",
+  },
+  {
+    name: "@atomic is a memory modifier (an access modifier — docs/atomics.md:71)",
+    file: "decorators.tension", line: 38, text: "atomic", nth: 1,
+    scope: "storage.modifier.memory.atomic.tension",
+    mode: "added",
+  },
+  {
+    name: "@external is an ABI modifier",
+    file: "decorators.tension", line: 26, text: "external", nth: 1,
+    scope: "storage.modifier.abi.external.tension",
+    mode: "added",
+  },
+  {
+    name: "@external.js is an ABI modifier (the JS half of the same contract)",
+    file: "decorators.tension", line: 47, text: "external.js", nth: 1,
+    scope: "storage.modifier.abi.external.js.tension",
+    mode: "added",
+  },
+  {
+    name: "@operator is an operator modifier",
+    file: "decorators.tension", line: 42, text: "operator", nth: 1,
+    scope: "storage.modifier.operator.tension",
+    mode: "added",
+  },
+  {
+    name: "@operator.binary is an operator modifier",
+    file: "decorators.tension", line: 43, text: "operator.binary", nth: 1,
+    scope: "storage.modifier.operator.binary.tension",
+    mode: "added",
+  },
+  {
+    name: "@operator.prefix is an operator modifier",
+    file: "decorators.tension", line: 44, text: "operator.prefix", nth: 1,
+    scope: "storage.modifier.operator.prefix.tension",
+    mode: "added",
+  },
+  {
+    name: "@final is a plain modifier",
+    file: "decorators.tension", line: 33, text: "final", nth: 1,
+    scope: "storage.modifier.final.tension",
+    mode: "added",
+  },
+  {
+    name: "@builtin is a plain modifier (library-only: src/program.ts:3016)",
+    file: "decorator-builtin.tension", line: 19, text: "builtin", nth: 1,
+    scope: "storage.modifier.builtin.tension",
+    mode: "added",
+  },
+  {
+    name: "@global is a plain modifier",
+    file: "decorators.tension", line: 34, text: "global", nth: 1,
+    scope: "storage.modifier.global.tension",
+    mode: "added",
+  },
+  {
+    name: "@unsafe is a plain modifier",
+    file: "decorators.tension", line: 35, text: "unsafe", nth: 1,
+    scope: "storage.modifier.unsafe.tension",
+    mode: "added",
+  },
+
+  // ── the fixed-size array [T * n] ───────────────────────────────────────────
+  // Justification: tests/gc/ordering-late.ts:16 and
+  // tests/compiler/interop/fixed-array-unmanaged-view.ts:35 in TensionScript;
+  // docs/interop-c-abi.md is the contract. Fixture compiles.
+  {
+    name: "`[` of a fixed array opens a fixed array, not a tuple",
+    file: "fixed-array.tension", line: 23, text: "[", nth: 1,
+    scope: "punctuation.definition.array.begin.tension",
+    mode: "added",
+  },
+  {
+    name: "`*` is the array-length operator",
+    file: "fixed-array.tension", line: 23, text: "*", nth: 1,
+    scope: "keyword.operator.array-length.tension",
+    mode: "added",
+  },
+  {
+    name: "`n` is an array length, not a general number",
+    file: "fixed-array.tension", line: 23, text: "4", nth: 1,
+    scope: "constant.numeric.array-length.tension",
+    mode: "added",
+  },
+  {
+    name: "`]` of a fixed array closes it",
+    file: "fixed-array.tension", line: 23, text: "]", nth: 1,
+    scope: "punctuation.definition.array.end.tension",
+    mode: "added",
+  },
+  {
+    name: "…and the whole type is one meta scope",
+    file: "fixed-array.tension", line: 23, text: "*", nth: 1,
+    stack: "meta.type.array.fixed.tension",
+    mode: "added",
+  },
+  {
+    name: "…`[f64 * 3]` in a variable annotation too",
+    file: "fixed-array.tension", line: 30, text: "*", nth: 1,
+    scope: "keyword.operator.array-length.tension",
+    mode: "added",
+  },
+
+  // ── the task types ─────────────────────────────────────────────────────────
+  // Justification: std/assembly/task.ts (Task at :360, TaskBase at :206,
+  // TaskPolicy at :114, TaskRecord at :20) — and guests import them.
+  {
+    name: "`Task` in a type position is a known task type",
+    file: "rt-guards.tension", line: 46, text: "Task", nth: 1,
+    scope: "support.type.task.tension",
+    mode: "added",
+  },
+  {
+    name: "`TaskBase` in a type position is a known task type",
+    file: "schedule-order.tension", line: 50, text: "TaskBase", nth: 1,
+    scope: "support.type.task.tension",
+    mode: "added",
+  },
+
+  // ── the ~lib/… compiler-library import ─────────────────────────────────────
+  // Justification: 14 guests import from `~lib/thread`, 7 from `~lib/task`; these
+  // resolve to the compiler's own std/assembly, not to files beside the guest.
+  {
+    name: "a `~lib/…` import is a compiler-library import",
+    file: "rt-guards.tension", line: 26, text: "~lib/task", nth: 1,
+    scope: "string.quoted.double.import.compiler-library.tension",
+    mode: "added",
+  },
+  {
+    name: "…whatever the module name",
+    file: "schedule-order.tension", line: 44, text: "~lib/thread", nth: 1,
+    scope: "string.quoted.double.import.compiler-library.tension",
+    mode: "added",
+  },
+
+  // ── EXT2 controls ──────────────────────────────────────────────────────────
+  {
+    name: "a look-alike decorator is not a modifier (@unmanagedThing)",
+    file: "decorators.tension", line: 51, text: "unmanagedThing", nth: 1,
+    scope: "variable.other.readwrite.ts",
+    mode: "always",
+  },
+  {
+    name: "a user decorator is not a modifier (@myDecorator)",
+    file: "decorators.tension", line: 52, text: "myDecorator", nth: 1,
+    scope: "variable.other.readwrite.ts",
+    mode: "always",
+  },
+  {
+    name: "`unmanaged` used as an identifier stays an identifier",
+    file: "decorators.tension", line: 54, text: "unmanaged", nth: 1,
+    scope: "variable.parameter.ts",
+    mode: "always",
+  },
+  {
+    name: "a tuple type keeps TypeScript's tuple scope",
+    file: "tuple-refused.tension", line: 21, text: "[", nth: 1,
+    stack: "meta.type.tuple.ts",
+    mode: "always",
+  },
+  {
+    name: "…and its element types sit inside the tuple, not an array",
+    file: "tuple-refused.tension", line: 21, text: "i32", nth: 2,
+    stack: "meta.type.tuple",
+    mode: "always",
+  },
+  {
+    name: "a local named `Task` stays a variable",
+    file: "names-not-types.tension", line: 18, text: "Task", nth: 1,
+    scope: "variable.other.readwrite.ts",
+    mode: "always",
+  },
+  {
+    name: "a relative import string keeps its ordinary scope",
+    file: "rt-guards.tension", line: 25, text: "../../../../tension-framework/assembly/runtime/rt", nth: 1,
+    scope: "string.quoted.double.ts",
+    mode: "always",
+  },
+
   // ── always: the negative case, and the controls ────────────────────────────
   // A variable named `on` must stay an identifier. The rule looks behind for `)`
   // precisely so that this stays true.
@@ -234,8 +441,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const scope = options.mode === null ? "" : ` ${options.mode}`;
   console.log(
     result.failed.length === 0
-      ? `[ SUCCESS ] EXT1 grammar${scope}: ${result.fixtures} fixtures, ${result.total} assertions`
-      : `[ FAILURE ] EXT1 grammar${scope}: ${result.failed.length} of ${result.total} assertions failed`,
+      ? `[ SUCCESS ] EXT2 grammar${scope}: ${result.fixtures} fixtures, ${result.total} assertions`
+      : `[ FAILURE ] EXT2 grammar${scope}: ${result.failed.length} of ${result.total} assertions failed`,
   );
   process.exit(result.failed.length === 0 ? 0 : 1);
 }

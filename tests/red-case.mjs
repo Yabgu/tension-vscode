@@ -63,7 +63,7 @@ if (always.failed.length > 0) {
 if (problems.length > 0) {
   for (const problem of problems) console.log(`FAIL  ${problem}`);
   console.log(
-    `[ FAILURE ] EXT1 red case: ${added.failed.length}/${added.total} added assertions fail ` +
+    `[ FAILURE ] EXT2 red case: ${added.failed.length}/${added.total} added assertions fail ` +
       `against upstream (expected ${added.total}), ${always.passed}/${always.total} ` +
       `controls pass (expected ${always.total})`,
   );
@@ -71,6 +71,6 @@ if (problems.length > 0) {
 }
 
 console.log(
-  `[ SUCCESS ] EXT1 red case: ${added.failed.length}/${added.total} added assertions fail ` +
+  `[ SUCCESS ] EXT2 red case: ${added.failed.length}/${added.total} added assertions fail ` +
     `against upstream, ${always.passed}/${always.total} controls still pass`,
 );
