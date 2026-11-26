@@ -52,6 +52,28 @@ editor argue with it. Switch by adding or removing one line of `settings.json`:
 Both are documented, with the `tsconfig.json` that makes mode A useful, in
 `docs/editor.md`.
 
+## Scopes this grammar adds
+
+Everything else is TypeScript's, unchanged. These are the vocabulary additions, each
+justified by a compiler file and asserted against a real fixture:
+
+| token | scope | why |
+|---|---|---|
+| `@unmanaged` `@managed` `@inline` `@lazy` `@atomic` | `storage.modifier.memory.<name>.tension` | the memory family — what a value is in memory, and how it is reached (`docs/memory-model.md`, `docs/atomics.md`) |
+| `@external` `@external.js` | `storage.modifier.abi.<name>.tension` | the host boundary — the C and JS halves of one contract |
+| `@operator` `@operator.binary` `@operator.prefix` `@operator.postfix` | `storage.modifier.operator.<name>.tension` | operator overloading |
+| `@final` `@builtin` `@global` `@unsafe` | `storage.modifier.<name>.tension` | compiler directives that are none of the above |
+| `[T * n]` | `meta.type.array.fixed.tension` + `punctuation.definition.array.*`, `keyword.operator.array-length`, `constant.numeric.array-length` | the fixed-size array; upstream reads it as a tuple |
+| `Task` `TaskBase` `TaskRecord` | `support.type.task.tension` (in type positions) | the task types in `std/assembly/task.ts` |
+| `"~lib/…"` | `string.quoted.double.import.compiler-library.tension` | a compiler-library import, not a path beside the file |
+| `i32` `i64` `u32` `u64` `f32` `f64` `usize` `isize` `bool` … | `support.type.primitive.tension` | the compiler's scalar primitives |
+| `on` (after a call) | `keyword.control.task-policy.tension` | `let t = f() on new Policy();` |
+
+**What is deliberately not scoped**, because the compiler does not treat it as a keyword:
+`policy` (an ordinary identifier — it is a local and a field name in real programs), and
+`TaskPolicy` in `extends TaskPolicy` (which keeps `entity.other.inherited-class.ts`,
+because that is what it is there).
+
 ## What is in here
 
 ```
@@ -80,10 +102,11 @@ npm test
 runs three things, in this order:
 
 1. `node tools/fork.mjs --check` — the shipped grammar is what the generator produces.
-2. `node tests/grammar.mjs` — **17 assertions over 5 fixtures**, against the shipped
-   grammar. Includes the negative case: a variable named `on` must still be a variable.
-3. `node tests/red-case.mjs` — **the same 8 assertions this fork adds, run against the
-   unmodified upstream grammar, must all fail**, while the 9 control assertions must all
+2. `node tests/grammar.mjs` — **48 assertions over 10 fixtures**, against the shipped
+   grammar. Includes the negative cases: a variable named `on` must still be a variable, a
+   tuple must stay a tuple, `@unmanagedThing` must not be a decorator.
+3. `node tests/red-case.mjs` — **the same 32 assertions this fork adds, run against the
+   unmodified upstream grammar, must all fail**, while the 16 control assertions must all
    pass. A test nobody has seen fail is not a test, so the red case is a gate and not a
    sentence in a report.
 

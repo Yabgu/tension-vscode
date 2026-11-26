@@ -2,7 +2,7 @@
   "name": "tension-vscode",
   "displayName": "TensionScript",
   "description": "Syntax highlighting and editor behaviour for TensionScript guest sources (.tension, .ten).",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "tension",
   "license": "MIT",
   "private": true,
