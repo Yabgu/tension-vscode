@@ -1,0 +1,7 @@
+ERROR TS2304: Cannot find name 'nope'.
+   :
+ 2 │ return nope;
+   │        ~~~~
+   └─ in b_type.ten(2,10)
+
+FAILURE 1 compile error(s)

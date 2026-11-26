@@ -1,0 +1,13 @@
+ERROR TS2305: Module '~lib/thread' has no exported member 'taskSleep'.
+   :
+ 1 │ import { taskSleep } from "~lib/thread";
+   │          ~~~~~~~~~
+   └─ in d_lib.ten(1,10)
+
+ERROR TS2304: Cannot find name 'taskSleep'.
+   :
+ 2 │ export function f(): void { taskSleep(1); }
+   │                             ~~~~~~~~~
+   └─ in d_lib.ten(2,29)
+
+FAILURE 2 compile error(s)

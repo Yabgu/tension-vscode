@@ -1,0 +1,7 @@
+ERROR TS1109: Expression expected.
+   :
+ 2 │ return 1 +;
+   │           ^
+   └─ in e_parse.ten(2,13)
+
+FAILURE 1 parse error(s)

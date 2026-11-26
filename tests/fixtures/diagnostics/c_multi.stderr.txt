@@ -1,0 +1,13 @@
+ERROR TS2322: Type 'i32' is not assignable to type '~lib/string/String'.
+   :
+ 2 │ let x: string = a;
+   │                 ~
+   └─ in c_multi.ten(2,19)
+
+ERROR TS2322: Type '~lib/string/String' is not assignable to type 'i32'.
+   :
+ 3 │ return x;
+   │        ~
+   └─ in c_multi.ten(3,10)
+
+FAILURE 2 compile error(s)

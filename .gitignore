@@ -1,2 +1,6 @@
 node_modules/
 *.vsix
+
+# Compiled output. `main` points here; `npm run build` produces it, and `pretest`
+# runs that build, so nothing is ever tested against a stale compile.
+dist/

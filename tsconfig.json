@@ -1,0 +1,22 @@
+{
+  // The extension ships compiled output: CI runs Node 20 and 22 (see
+  // .github/workflows/grammar.yml), and neither can import a `.ts` file, so
+  // `tests/core.mjs` imports `dist/core/*.js` — the same bytes the editor loads. That is
+  // a deliberate deviation from "tests import src/core/**": testing the compiled output
+  // is testing what ships, and no build step is added that CI does not run.
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2021"],
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noImplicitOverride": true,
+    "sourceMap": true,
+    "declaration": false,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"]
+}

@@ -2,7 +2,7 @@
   "name": "tension-vscode",
   "displayName": "TensionScript",
   "description": "Syntax highlighting and editor behaviour for TensionScript guest sources (.tension, .ten).",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "tension",
   "license": "MIT",
   "private": true,
@@ -24,12 +24,17 @@
     "url": "https://github.com/Yabgu/tension-vscode"
   },
   "scripts": {
-    "test": "node tools/fork.mjs --check && node tests/manifest.mjs && node tests/grammar.mjs && node tests/red-case.mjs",
+    "build": "tsc",
+    "pretest": "npm run build",
+    "test": "node tools/fork.mjs --check && node tests/manifest.mjs && node tests/grammar.mjs && node tests/red-case.mjs && node tests/core.mjs && node tests/compiler-live.mjs",
     "grammar": "node tools/fork.mjs",
     "tokenize": "node tests/tokenize.mjs",
-    "package": "vsce package"
+    "package": "npm run build && vsce package"
   },
   "devDependencies": {
+    "@types/node": "^22.20.7",
+    "@types/vscode": "^1.70.0",
+    "typescript": "^5.9.3",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"
   },
@@ -58,6 +63,20 @@
         "scopeName": "source.tension",
         "path": "./syntaxes/tension.tmLanguage.json"
       }
-    ]
-  }
+    ],
+    "configuration": {
+      "title": "TensionScript",
+      "properties": {
+        "tension.compilerPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the TensionScript compiler's `bin/tensionscript.js`. Empty means: try the workspace's `bin/`, then a sibling `TensionScript*` checkout, then `PATH`. When none is found **no diagnostics are shown** \u2014 a wrong squiggle under correct code is worse than none."
+        }
+      }
+    }
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:tension"
+  ]
 }
