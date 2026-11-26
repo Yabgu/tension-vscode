@@ -16,7 +16,7 @@
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, readdirSync, statSync } from "node:fs";
-import { delimiter, isAbsolute, join, resolve } from "node:path";
+import { delimiter, isAbsolute, resolve } from "node:path";
 
 /** A resolved compiler, or the reason there is not one. */
 export type CompilerFound =
@@ -69,8 +69,21 @@ export interface DiscoverInput {
 /** The setting name, quoted in every message that tells a user what to change. */
 export const SETTING = "tension.compilerPath";
 
-/** The CLI entry inside a checkout, relative to its root. */
-const CLI_RELATIVE = join("bin", "tensionscript.js");
+/**
+ * The CLI entry inside a checkout, relative to its root.
+ *
+ * **Forward slashes, always.** Node's `fs` accepts `/` on Windows, so one spelling works on
+ * both platforms — and `path.join` would spell it `bin\\tensionscript.js` there, which
+ * makes every candidate path depend on the *host* that built it. Measured: a Windows CI job
+ * failed the workspace-discovery assertion for exactly that reason while Linux passed.
+ */
+const CLI_RELATIVE = "bin/tensionscript.js";
+
+/** Join with `/`, so a candidate path reads the same on every host. */
+function relay(base: string, ...parts: string[]): string {
+  const trimmed = base.replace(/[\\/]+$/, "");
+  return [trimmed, ...parts].join("/");
+}
 
 /**
  * Resolve the compiler, in the declared order, and never guess.
@@ -99,7 +112,7 @@ export function discoverCompiler(input: DiscoverInput = {}): CompilerFound {
 
   // 2. The workspace's own `bin/`.
   if (input.workspaceFolder) {
-    const candidate = join(input.workspaceFolder, CLI_RELATIVE);
+    const candidate = relay(input.workspaceFolder, CLI_RELATIVE);
     tried.push(`workspace ${candidate}`);
     if (fs.exists(candidate)) return { ok: true, path: candidate, via: "workspace-bin" };
 
@@ -113,7 +126,7 @@ export function discoverCompiler(input: DiscoverInput = {}): CompilerFound {
       .filter((name) => name.startsWith("TensionScript"))
       .sort();
     for (const name of siblings) {
-      const candidate = join(parent, name, CLI_RELATIVE);
+      const candidate = relay(relay(parent, name), CLI_RELATIVE);
       if (fs.exists(candidate)) return { ok: true, path: candidate, via: "sibling-checkout" };
     }
   }
@@ -125,7 +138,7 @@ export function discoverCompiler(input: DiscoverInput = {}): CompilerFound {
   for (const dir of (input.pathEnv ?? process.env.PATH ?? "").split(delimiter)) {
     if (dir.length === 0) continue;
     for (const ext of exts) {
-      const candidate = join(dir, `tensionscript${ext}`);
+      const candidate = relay(dir, `tensionscript${ext}`);
       if (fs.exists(candidate)) return { ok: true, path: candidate, via: "path" };
     }
   }
