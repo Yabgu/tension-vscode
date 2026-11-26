@@ -48,3 +48,23 @@ because the red case only proves upstream fails.
 
 It is not a guest because no guest names a variable `on`, and inventing a guest to
 prove the point would be a worse lie than writing a test fixture that says what it is.
+
+## 3. EXT2's fixtures
+
+EXT2 added five. Two more are copied guests; three are written fixtures whose every
+construct is transcribed from a real file in the compiler's tree, and whose headers say
+which line. **All three written ones that can compile were compiled**, with the vendored
+compiler, and the byte count in each header is the result of that run.
+
+| file here | what it is | compiles? |
+|---|---|---|
+| `decorators.tension` | 11 of the compiler's 12 decorators, each in a position transcribed from a real declaration | **yes** (5 061 B, `--enable threads`) |
+| `decorator-builtin.tension` | `@builtin`, which only a library source may carry (`src/program.ts:3016`) | **no, by design** — `AS212` |
+| `fixed-array.tension` | `[T * n]` in three shapes, from `tests/gc/ordering-late.ts:16` and `tests/compiler/interop/fixed-array-unmanaged-view.ts:35` | **yes** (269 B) |
+| `tuple-refused.tension` | a tuple type — the fixed-array rule's control | **no, by design** — `AS100 Not implemented: Tuple types` |
+| `names-not-types.tension` | `Task` as a field, a local and a property read — the task-type rule's control | **yes** (4 879 B) |
+
+The two that do not compile are the two where compiling would be a contradiction: a
+fixture that carried `@builtin` *and* compiled would prove the compiler wrong, and a
+fixture with a tuple would prove the brief's tuple question answered differently. Their
+headers state the command and its error instead.

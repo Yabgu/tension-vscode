@@ -1,0 +1,58 @@
+// **Every decorator the compiler recognises**, in a position where each is legal.
+//
+// Derived from the compiler, not imagined — `DecoratorKind.fromNode` at
+// `TensionScript/src/ast.ts:1279-1360` is the complete set, and it has **twelve**
+// names where the round's brief listed eight. Each line below is transcribed from a
+// real declaration in the compiler's own tree; the `from:` note says which.
+//
+// **Eleven of the twelve are here, and this file compiles.** Verified with the vendored compiler
+// (`TensionScript 368742df`, identity f97c0f03b334):
+//
+//   node bin/tensionscript.js decorators.tension -o /tmp/dec.wasm --enable threads
+//   -> COMPILED, 5088 bytes
+//
+// `@atomic` needs `--enable threads` (the atomic instructions are the threads proposal:
+// `AS100: Not implemented: @atomic without the threads feature`).
+//
+// **`@builtin` is the twelfth, and it is not in this file** because it cannot be:
+// `src/program.ts:3016-3018` grants `DecoratorFlags.Builtin` only when
+// `declaration.range.source.isLibrary`, so a guest gets `AS212: Decorator '@builtin' is
+// not valid here` — and this fixture is proven by compiling. It lives in
+// `decorator-builtin.tension`, which says the same thing from the other side.
+//
+// The `@unmanagedThing` and `myDecorator` lines at the bottom are the controls: a
+// look-alike decorator and a user decorator, neither of which is a compiler keyword.
+
+@external("env", "host_fn")            // from: std/assembly/builtins.ts:2630
+declare function hostFn(x: i32): i32;
+
+@unmanaged class Ptr { x: i32; }       // from: tests/gc/ordering-late.ts:16
+class Heap { y: i32 = 0; }              // `@managed` is a *type* position, not a class one
+@inline function inlined(a: i32): i32 { return a + 1; }   // std/assembly/array.ts:12
+@lazy const lazily: i32 = 7;           // from: std/assembly/array.ts:12
+@final class Sealed { v: i32 = 0; }    // from: std/assembly/arraybuffer.ts:30
+@global const GLOBAL_ONE: i32 = 1;     // from: std/assembly/rt.ts:50
+@unsafe function rawLoad(p: usize): i32 { return load<i32>(p); }  // array.ts:49
+
+class Holder {
+  @atomic counter: i32 = 0;            // from: docs/atomics.md:66
+}
+
+class Vec {
+  @operator("+") add(o: Vec): Vec { let r = new Vec(); return r; }  // array.ts:113
+  @operator.binary("-") static dot(a: Vec, b: Vec): i32 { return 0; }  // ast.ts:1352
+  @operator.prefix("-") neg(): Vec { return this; }                  // ast.ts:1355
+}
+
+@external.js("hostMod", "hostFn2")     // ast.ts:1358-1363
+declare function hostFn2(x: i32): i32;
+
+// --- controls: neither of these is a compiler keyword, and neither may be scoped as one
+@unmanagedThing class NotAThing { z: i32 = 0; }
+@myDecorator class Custom { w: i32 = 0; }
+
+export function entry(unmanaged: i32): i32 {   // a plain identifier named `unmanaged`
+  let n: @unmanaged Ptr = changetype<@unmanaged Ptr>(0);
+  let h: @managed Heap = new Heap();   // from: src/builtins.ts:4066 — type position
+  return inlined(GLOBAL_ONE + unmanaged) + lazily + new Sealed().v + h.y + <i32>n.x;
+}

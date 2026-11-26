@@ -1,0 +1,23 @@
+// **A tuple type, which TensionScript parses but does not implement.**
+//
+// This is the control for the fixed-array rule: `[` starts both a fixed array and a
+// tuple, and the grammar must not swallow the tuple.
+//
+// Whether TensionScript *has* tuple types was an explicit question in the round's
+// brief. The answer, measured:
+//
+//   * The **parser** has the arm — `src/parser.ts:1021-1053`, gated on
+//     `Feature.MultiValue`, and `Node.createTupleType` exists (`src/ast.ts:191`).
+//   * The **compiler refuses every use**: with `--enable multi-value`,
+//     `ERROR AS100: Not implemented: Tuple types`. Without the feature, `TS1110: Type
+//     expected`.
+//
+// So no legal TensionScript program contains a tuple. This fixture therefore cannot
+// compile, and does not claim to; it exists because an editor holds half-written code,
+// and `[i32, i32]` should read as the tuple the author meant rather than as an array
+// with a missing extent.
+
+export function entry(): i32 {
+  let pair: [i32, i32] = [1, 2];
+  return pair[0];
+}

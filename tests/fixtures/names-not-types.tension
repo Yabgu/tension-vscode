@@ -1,0 +1,21 @@
+// **The names this round scopes as types, used as ordinary identifiers instead.**
+//
+// The controls for the task-type rule. Each of these compiles — `Task` is not a reserved
+// word, and the compiler treats these as plain identifiers:
+//
+//   node bin/tensionscript.js names-not-types.tension -o /tmp/n.wasm
+//   -> COMPILED, 4879 bytes
+//
+// If the grammar scoped every occurrence of `Task` as a type, a program that names a
+// local `Task` (legal, and a natural name to pick) would be coloured as if it were the
+// class, and every use of it would look like a type error to the reader.
+
+class Holder {
+  Task: i32 = 3;            // a *field* named Task
+}
+
+export function entry(): i32 {
+  let Task: i32 = 1;        // a *local* named Task
+  let h = new Holder();
+  return Task + h.Task;     // a read, and a property access
+}

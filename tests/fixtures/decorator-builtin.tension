@@ -1,0 +1,20 @@
+// **`@builtin`, which only a library source may carry.**
+//
+// `TensionScript/src/program.ts:3016-3018` grants `DecoratorFlags.Builtin` only when
+// `declaration.range.source.isLibrary`:
+//
+//     if (declaration.range.source.isLibrary) {
+//       validDecorators |= DecoratorFlags.Builtin;
+//     }
+//
+// So this file **cannot compile as a guest**, and it is not meant to:
+//
+//   node bin/tensionscript.js decorator-builtin.tension -o /tmp/b.wasm
+//   -> ERROR AS212: Decorator '@builtin' is not valid here.
+//
+// It exists because the grammar must scope `@builtin` correctly wherever it is written —
+// an editor has no idea whether the buffer will end up compiled as a library — and the
+// compiler's own std carries it 605 times (`std/assembly/async-stack.ts:26` first).
+
+@builtin
+export declare function __installCont(start: () => i32): i32;

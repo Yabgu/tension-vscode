@@ -1,0 +1,38 @@
+// **The fixed-size array `[T * n]`**, in every shape the C ABI contract allows.
+//
+// Derived from real code, not imagined:
+//   * `tests/gc/ordering-late.ts:16`  — `view: @unmanaged [u32 * 4] = changetype<…>(0)`
+//   * `tests/compiler/interop/fixed-array-unmanaged-view.ts:35` — `sizeof<@unmanaged [u32 * 4]>()`
+//   * `docs/interop-c-abi.md`         — the contract these encode
+//
+// **It compiles** (vendored compiler 368742df, identity f97c0f03b334):
+//
+//   node bin/tensionscript.js fixed-array.tension -o /tmp/fa.wasm \
+//     --runtime incremental --target release --optimizeLevel 0
+//   -> COMPILED, 269 bytes
+//
+// Two shapes are refused as *values* and supported as `@unmanaged` views: a `[T * N]`
+// whose element is a GC reference, and any nested `[[T * N] * N]`. Both refusals are in
+// this file's history; the lines below use the supported form.
+//
+// A `[T * N]` **value** cannot cross an export boundary — the compiler refuses it by
+// name ("one WASM parameter per element leaf would make the extent and layout part of
+// the host ABI") — so the export takes an `@unmanaged` pointer, which is the shape the
+// ABI doc prescribes.
+
+function sum(arr: [u32 * 4]): u32 {
+  let t: u32 = 0;
+  for (let i = 0; i < 4; ++i) t += unchecked(arr[i]);
+  return t;
+}
+
+export function entry(): u32 {
+  let pos: [f64 * 3] = [0.0, 0.0, 0.0];
+  let view: @unmanaged [u32 * 4] = changetype<@unmanaged [u32 * 4]>(0);
+  // A **nested** fixed array is only supported as an `@unmanaged` pointer view: as a
+  // *value* the compiler refuses it by name ("a nested array needs the deep-SROA
+  // phase") — measured, and the reason this line is a `changetype` rather than a
+  // literal like the two above.
+  let nested: @unmanaged [[u8 * 2] * 3] = changetype<@unmanaged [[u8 * 2] * 3]>(0);
+  return sum([1, 2, 3, 4]) + <u32>pos[0] + <u32>view[0] + <u32>nested[0][0];
+}
