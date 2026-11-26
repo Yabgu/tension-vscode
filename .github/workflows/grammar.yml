@@ -55,6 +55,27 @@ jobs:
       - name: The red case
         run: node tests/red-case.mjs
 
-      # 5. A .vsix builds — the manifest is valid and the package is not empty.
+      # 5. The logic, in plain Node. EXT5 put every decidable behaviour in `src/core/`,
+      #    which imports no `vscode`, so it runs here with no editor and no download. It
+      #    imports the compiled output because Node 20/22 cannot import TypeScript — hence
+      #    the build step above it, and hence this step failing loudly if the build breaks.
+      - name: Core (discovery, diagnostics, symbols, definition)
+        run: |
+          npm run build
+          node tests/core.mjs
+
+      # 6. The parser against a *real* compile. It skips when no compiler is installed,
+      #    which is CI's case, and says so — a skip is visible, not a green line over
+      #    nothing.
+      - name: Live compiler check (skips without a compiler)
+        run: node tests/compiler-live.mjs
+
+      # 7. A .vsix builds — the manifest is valid and the package is not empty.
+      #
+      #    **The build comes first, and this step is why.** `main` points at
+      #    `dist/extension.js`, which is gitignored because it is generated; a fresh
+      #    checkout therefore has no entrypoint, and `vsce package` fails with
+      #    "Extension entrypoint(s) missing". Measured: that is exactly how the first run
+      #    of this job failed on all four matrix entries.
       - name: Package
-        run: npx --yes @vscode/vsce package
+        run: npm run build && npx --yes @vscode/vsce package

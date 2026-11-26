@@ -34,7 +34,7 @@ cosmetically — they differ in which engine reads the file.
 | mode | association | what you get | what you pay |
 |---|---|---|---|
 | **A** — no extension | `*.tension → typescript` | The TypeScript **language server**: completion, hover, go-to-definition, refactoring. Point `tsconfig.json` at TensionScript's `types/tension-guest.d.ts` and it also knows `i32`, `usize`, `Task<T>` and the std intrinsics. | Three irreducible errors, because TypeScript has no such syntax: `@external(...)` on a function declaration (`TS1206`), `async f(): i32` (`TS1064` — in TensionScript an async function's declared type *is* its result type), and `~lib/…` imports that either do not resolve or resolve to a second copy of the compiler's source. The TS server also reports diagnostics that argue with valid guest code. |
-| **B** — this extension | `*.tension → tension` | Correct scopes: the compiler's scalar primitives as types, `on` as a task-policy keyword, plus everything TypeScript's grammar already got right (decorators, generics, strings, `async`/`await`). Indentation, bracket matching and comment toggling from TypeScript's language configuration. | **No language server**, so no completion, no hover, no diagnostics — those are absent rather than wrong, which is the point. |
+| **B** — this extension | `*.tension → tension` | Correct scopes: the compiler's scalar primitives as types, `on` as a task-policy keyword, plus everything TypeScript's grammar already got right (decorators, generics, strings, `async`/`await`). Indentation, bracket matching and comment toggling from TypeScript's language configuration. **And, since 0.3.0:** diagnostics **from the compiler itself**, an outline, and Ctrl+click within a file or into `~lib/`. | No completion, no hover, no rename, and no cross-file jump — those need an element graph, not a compiler invocation. Diagnostics require the compiler to be found (below); when it is not, none are shown. |
 | **C** — later | `tension` + an LSP | Both. | A language server: an LSP project, not a grammar. |
 
 **Neither A nor B is wrong.** Mode A is better while you are writing new code and want
@@ -51,6 +51,34 @@ editor argue with it. Switch by adding or removing one line of `settings.json`:
 
 Both are documented, with the `tsconfig.json` that makes mode A useful, in
 `docs/editor.md`.
+
+### Where the diagnostics come from (0.3.0)
+
+Mode B runs the real compiler. No language server, no `tsserver`, no re-implementation of
+the type checker — the extension finds `tensionscript`, runs it on the file, and parses what
+it prints. That is why a squiggle here is a thing the compiler will actually refuse.
+
+It looks for the compiler in this order, and then **stops**:
+
+1. the `tension.compilerPath` setting;
+2. `<workspace>/bin/tensionscript.js`;
+3. a sibling `TensionScript*` checkout's `bin/tensionscript.js`;
+4. `tensionscript` on `PATH`.
+
+If none is found **no diagnostics are shown at all**, and one status-bar item names the
+setting and lists what was looked at. A wrong squiggle under correct code is worse than
+none, so nothing is guessed.
+
+A check takes about a second, so it runs 600 ms after you stop typing and again on save, and
+a newer request kills the older compile. The status bar says `checking…` while it runs, then
+`n diagnostic(s)`. A diagnostic the compiler printed without a position (a missing file, for
+instance) is **dropped and counted**, not placed at a line it never named.
+
+Ctrl+click resolves **within the file, or into the compiler's own `~lib/` std**. Anything
+else — a cross-file project reference — returns nothing on purpose, and the status tooltip
+counts the misses (`definition: 3 unresolved (last: helper — cross-file-import)`) so the
+limit is visible rather than mysterious. A cross-file model is the next round.
+
 
 ## Scopes this grammar adds
 
