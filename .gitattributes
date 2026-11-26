@@ -1,0 +1,46 @@
+# Line endings: LF in the index and LF in every checkout.
+#
+# **Why this repository needs the rule more than most.** `tools/fork.mjs --check`
+# compares the shipped grammar against what the fork tool produces **byte for byte**,
+# and `JSON.stringify` emits LF on every platform. `actions/checkout` on a Windows
+# runner checks out with `core.autocrlf=true`, so without this file the working tree
+# holds CRLF while the generator writes LF — the comparison fails, and it fails only on
+# Windows. Measured on run 45881297051: `Grammar (windows-latest, node 20)` and
+# `(node 22)` both reported `fork: syntaxes/tension.tmLanguage.json is stale`, while
+# both ubuntu jobs passed the same commit.
+#
+# `eol=lf` normalises on commit *and* on checkout, so the two platforms agree by
+# construction rather than by a workflow step that rewrites files after the fact.
+#
+# This mirrors the rule the Tension product repository already carries
+# (`* text=auto eol=lf` plus explicit `eol=lf` for JSON), so a file copied between the
+# two trees has the same bytes on both sides.
+
+* text=auto eol=lf
+
+# The file the gate compares byte for byte. Covered by the blanket rule above; named
+# because it is the reason this file exists, and a future reader should not have to
+# infer that from `* text=auto`.
+*.tmLanguage.json text eol=lf
+
+# Manifests and data: `package.json`, `package-lock.json`, `language-configuration.json`.
+# A JSON file is text, and a CRLF one makes every JSON diff look rewritten.
+*.json text eol=lf
+
+# The fixtures are guest programs copied from the Tension repository, where they are LF.
+# A CRLF copy here would still tokenize (the harness splits on `\r\n`), but it would stop
+# being a faithful copy — and the assertions name lines of these files.
+*.tension text eol=lf
+*.ten text eol=lf
+
+# Markdown, the workflow and the JavaScript/MJS sources: covered by the blanket rule,
+# listed so the intent is legible without knowing what `text=auto` decides.
+*.md    text eol=lf
+*.mjs   text eol=lf
+*.js    text eol=lf
+*.yml   text eol=lf
+
+# Binary: never converted, never diffed. `*.vsix` is gitignored, but a packaged
+# extension that ever gets committed must not be mangled by an EOL rule.
+*.vsix binary
+*.png  binary
