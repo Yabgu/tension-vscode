@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| repository | **`~/work/tension-vscode`**, `main`, **13 commits**, clean, **no remote, nothing pushed** |
+| repository | **`~/work/tension-vscode`**, `main`, clean, **no remote, nothing pushed**; `git log --oneline` is authoritative and this round added six commits |
 | gate | `npm test` → **`[ SUCCESS ] EXT2 grammar: 10 fixtures, 48 assertions`** |
 | red case | **`[ SUCCESS ] EXT2 red case: 32/32 added assertions fail against upstream, 16/16 controls still pass`** |
 | package | **`tension-vscode-0.1.0.vsix`**, 7 files, **25,007 bytes**; installed, `@0.1.0` listed |
