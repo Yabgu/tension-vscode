@@ -16,7 +16,7 @@
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, readdirSync, statSync } from "node:fs";
-import { delimiter, isAbsolute, resolve } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 
 /** A resolved compiler, or the reason there is not one. */
 export type CompilerFound =
@@ -160,7 +160,11 @@ export function discoverCompiler(input: DiscoverInput = {}): CompilerFound {
   // and `;` on Windows, so splitting a Windows PATH with the host's delimiter turns
   // `C:\\tools;D:\\bin` into `C`, `\\tools;D`, `\\bin` — measured here, and it silently
   // finds nothing on a machine that has the compiler.
-  const pathSeparator = isWindows ? ";" : delimiter;
+  // Both spellings are written out, rather than one of them taken from `path.delimiter`:
+  // that constant is the *host's*, so `isWindows: false` on a Windows machine would still
+  // split on `;`. Measured — this is the second version of this line, and the first still
+  // failed on Windows CI for exactly that reason.
+  const pathSeparator = isWindows ? ";" : ":";
   for (const dir of (input.pathEnv ?? process.env.PATH ?? "").split(pathSeparator)) {
     if (dir.length === 0) continue;
     for (const ext of exts) {
