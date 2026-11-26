@@ -40,14 +40,13 @@ const outPath = join(repo, "syntaxes", "tension.tmLanguage.json");
 
 /**
  * **The compiler's scalar primitive types**, transcribed from
- * `TensionScript/src/builtins.ts:232-244`:
+ * `TensionScript/src/builtins.ts:230-243`, which is one contiguous block:
  *
- *   232: i32   233: i64   234: isize   236: i16   237: u32   238: u64
- *   239: usize 240: bool  241: f32     242: f64
+ *   230 i8   231 i16  232 i32  233 i64  234 isize  235 u8   236 u16
+ *   237 u32  238 u64  239 usize 240 bool  241 f32   242 f64  243 v128
  *
- * (`i8`/`u8`/`u16` are declared at the same block's neighbours; the block is
- * `i8 i16 i32 i64 isize u8 u16 u32 u64 usize bool f32 f64 v128`. `v128` is a SIMD
- * vector, not a scalar annotation, and appears in no guest.)
+ * `v128` (243) is a SIMD vector, not a scalar annotation, and appears in no guest, so
+ * it is the one declared name this list omits.
  *
  * **Included even where no guest uses one yet.** This is not an invented keyword: it
  * is a closed set the compiler declares, and a grammar that coloured `i32` and left
