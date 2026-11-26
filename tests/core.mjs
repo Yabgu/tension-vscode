@@ -114,6 +114,10 @@ const fixture = (name) => readFileSync(join(fixtures, `${name}.stderr.txt`), "ut
 
   // 2e. PATH last, and only for an exact name.
   const viaPath = discoverCompiler({
+    // This case is about POSIX PATH splitting, so it says so rather than inheriting the
+    // host's platform — otherwise it asserts a colon-split on a machine whose PATH
+    // separator is a semicolon, which is how it failed on Windows CI.
+    isWindows: false,
     pathEnv: "/usr/local/bin:/opt/bin",
     fs: {
       exists: (p) => p === "/opt/bin/tensionscript",
