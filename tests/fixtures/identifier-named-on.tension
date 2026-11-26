@@ -1,0 +1,14 @@
+// **A legal TensionScript program whose variable is named `on`** (EXT1).
+//
+// Not copied from a guest: written for this test, because the grammar must not
+// miscolour it. Proven legal by compiling it with the vendored compiler
+// (TensionScript f97c0f03b334 → exit 0); `on` is accepted after a call expression
+// only, which is why the grammar's keyword rule looks behind for `)`.
+//
+// If the grammar scoped this `on` as a keyword, the rule would be reading the word
+// instead of the position — and every future variable called `on` would be wrong.
+export function entry(): i32 {
+  let on = 1;
+  on = on + 1;
+  return on;
+}
