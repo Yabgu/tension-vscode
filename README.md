@@ -68,6 +68,8 @@ justified by a compiler file and asserted against a real fixture:
 | `"~lib/…"` | `string.quoted.double.import.compiler-library.tension` | a compiler-library import, not a path beside the file |
 | `i32` `i64` `u32` `u64` `f32` `f64` `usize` `isize` `bool` … | `support.type.primitive.tension` | the compiler's scalar primitives |
 | `on` (after a call) | `keyword.control.task-policy.tension` | `let t = f() on new Policy();` |
+| `struct` | `storage.type.struct.tension`, name `entity.name.type.struct.tension` | a value struct; its body is a class body, so fields, methods, getters, generics and type annotations all scope |
+| `v128` | `support.type.primitive.tension` | a SIMD vector — `CommonNames`, `src/common.ts:132` |
 
 **What is deliberately not scoped**, because the compiler does not treat it as a keyword:
 `policy` (an ordinary identifier — it is a local and a field name in real programs), and
@@ -102,11 +104,15 @@ npm test
 runs three things, in this order:
 
 1. `node tools/fork.mjs --check` — the shipped grammar is what the generator produces.
-2. `node tests/grammar.mjs` — **48 assertions over 10 fixtures**, against the shipped
+2. `node tests/manifest.mjs` — **18 checks** that every path the manifest contributes
+   resolves: the grammar, the language configuration, and the language icon (a broken icon
+   path draws nothing and reports nothing).
+3. `node tests/grammar.mjs` — **71 assertions over 13 fixtures**, against the shipped
    grammar. Includes the negative cases: a variable named `on` must still be a variable, a
-   tuple must stay a tuple, `@unmanagedThing` must not be a decorator.
-3. `node tests/red-case.mjs` — **the same 32 assertions this fork adds, run against the
-   unmodified upstream grammar, must all fail**, while the 16 control assertions must all
+   tuple must stay a tuple, `@unmanagedThing` must not be a decorator, a variable named
+   `f32` must stay a variable.
+4. `node tests/red-case.mjs` — **the same 50 assertions this fork adds, run against the
+   unmodified upstream grammar, must all fail**, while the 21 control assertions must all
    pass. A test nobody has seen fail is not a test, so the red case is a gate and not a
    sentence in a report.
 

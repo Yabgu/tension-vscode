@@ -2,7 +2,7 @@
   "name": "tension-vscode",
   "displayName": "TensionScript",
   "description": "Syntax highlighting and editor behaviour for TensionScript guest sources (.tension, .ten).",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "tension",
   "license": "MIT",
   "private": true,
@@ -24,7 +24,7 @@
     "url": "https://github.com/Yabgu/tension-vscode"
   },
   "scripts": {
-    "test": "node tools/fork.mjs --check && node tests/grammar.mjs && node tests/red-case.mjs",
+    "test": "node tools/fork.mjs --check && node tests/manifest.mjs && node tests/grammar.mjs && node tests/red-case.mjs",
     "grammar": "node tools/fork.mjs",
     "tokenize": "node tests/tokenize.mjs",
     "package": "vsce package"
@@ -45,7 +45,11 @@
           ".tension",
           ".ten"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/tension-light.png",
+          "dark": "./icons/tension-dark.png"
+        }
       }
     ],
     "grammars": [

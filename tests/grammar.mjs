@@ -354,6 +354,157 @@ export const ASSERTIONS = [
     scope: "keyword.control.flow.ts",
     mode: "always",
   },
+  // ══ EXT4: `struct`, and the primitives in every position ═════════════════
+
+  // Justification: `src/tokenizer.ts:323` (Token.Struct), `src/parser.ts:515`, and the
+  // body being a class body (`parseClassOrInterface`). Fixture compiles.
+  {
+    name: "`struct` is a declaration keyword",
+    file: "struct-body.ten", line: 35, text: "struct", nth: 1,
+    scope: "storage.type.struct.tension",
+    mode: "added",
+  },
+  {
+    name: "…and the struct's name is a type, not a variable",
+    file: "struct-body.ten", line: 35, text: "Vec3", nth: 1,
+    scope: "entity.name.type.struct.tension",
+    mode: "added",
+  },
+  {
+    name: "a struct field is a field declaration",
+    file: "struct-body.ten", line: 48, text: "count", nth: 1,
+    scope: "variable.object.property.ts",
+    mode: "added",
+  },
+  {
+    name: "…its `:` is a type annotation",
+    file: "struct-body.ten", line: 48, text: ":", nth: 1,
+    scope: "keyword.operator.type.annotation.ts",
+    mode: "added",
+  },
+  {
+    name: "…the body carries `meta.field.declaration`",
+    file: "struct-body.ten", line: 48, text: "i8", nth: 1,
+    stack: "meta.field.declaration",
+    mode: "added",
+  },
+  {
+    // **The user's first complaint, as an assertion.** `f32` inside a struct was
+    // `variable.other.readwrite.alias.ts`; it is the reason this round exists.
+    name: "`f32` in a struct field is a primitive type",
+    file: "struct-body.ten", line: 36, text: "f32", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    // **…and the second, which named `i8`.**
+    name: "`i8` in a struct field is a primitive type",
+    file: "struct-body.ten", line: 48, text: "i8", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "`v128` is a primitive type (`CommonNames`, src/common.ts:132)",
+    file: "struct-body.ten", line: 39, text: "v128", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "a user-declared type in field position is a type",
+    file: "struct-body.ten", line: 50, text: "Vec3", nth: 1,
+    scope: "entity.name.type.ts",
+    mode: "added",
+  },
+  {
+    name: "a struct body can hold a method, with its annotations",
+    file: "struct-body.ten", line: 51, text: "f32", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "…and a getter",
+    file: "struct-body.ten", line: 52, text: "get", nth: 1,
+    scope: "storage.type.property.ts",
+    mode: "added",
+  },
+  {
+    name: "…and a generic parameter list",
+    file: "struct-body.ten", line: 47, text: "T", nth: 1,
+    scope: "entity.name.type.ts",
+    mode: "added",
+  },
+
+  // Primitive positions EXT2 did not cover: cast, and the primitives it never asserted.
+  {
+    name: "`i8` in a parameter is a primitive type",
+    file: "primitive-positions.ten", line: 17, text: "i8", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "`f64` in a return type is a primitive type",
+    file: "primitive-positions.ten", line: 17, text: "f64", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "`f64` in a cast is a primitive type",
+    file: "primitive-positions.ten", line: 18, text: "f64", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "`u32` in a type argument is a primitive type",
+    file: "primitive-positions.ten", line: 22, text: "u32", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "`i32` in `changetype<i32>` is a primitive type",
+    file: "primitive-positions.ten", line: 23, text: "i32", nth: 2,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+  {
+    name: "`i16` in an annotation is a primitive type",
+    file: "primitive-positions.ten", line: 24, text: "i16", nth: 1,
+    scope: "support.type.primitive.tension",
+    mode: "added",
+  },
+
+  // EXT4 controls — the primitives' names are ordinary names where the language says
+  // so, and a struct's `export` is still TypeScript's export.
+  {
+    name: "`export` before a struct is still the export keyword",
+    file: "struct-body.ten", line: 35, text: "export", nth: 1,
+    scope: "keyword.control.export.ts",
+    mode: "always",
+  },
+  {
+    name: "a cast keeps `cast.expr.ts` around the primitive",
+    file: "primitive-positions.ten", line: 18, text: "f64", nth: 1,
+    stack: "cast.expr.ts",
+    mode: "always",
+  },
+  {
+    name: "a variable named `f32` stays a variable",
+    file: "primitive-names.ten", line: 22, text: "f32", nth: 1,
+    scope: "variable.other.readwrite.ts",
+    mode: "always",
+  },
+  {
+    name: "a class named `i32` keeps its type name",
+    file: "primitive-names.ten", line: 17, text: "i32", nth: 1,
+    scope: "entity.name.type.class.ts",
+    mode: "always",
+  },
+  {
+    name: "…and reads as a constructor where it is one",
+    file: "primitive-names.ten", line: 23, text: "i32", nth: 1,
+    scope: "entity.name.function.ts",
+    mode: "always",
+  },
+
   {
     name: "a comment is still a comment",
     file: "schedule-order.tension", line: 1, text: "//", nth: 1,
@@ -441,8 +592,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const scope = options.mode === null ? "" : ` ${options.mode}`;
   console.log(
     result.failed.length === 0
-      ? `[ SUCCESS ] EXT2 grammar${scope}: ${result.fixtures} fixtures, ${result.total} assertions`
-      : `[ FAILURE ] EXT2 grammar${scope}: ${result.failed.length} of ${result.total} assertions failed`,
+      ? `[ SUCCESS ] EXT4 grammar${scope}: ${result.fixtures} fixtures, ${result.total} assertions`
+      : `[ FAILURE ] EXT4 grammar${scope}: ${result.failed.length} of ${result.total} assertions failed`,
   );
   process.exit(result.failed.length === 0 ? 0 : 1);
 }

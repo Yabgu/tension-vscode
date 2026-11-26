@@ -39,16 +39,22 @@ jobs:
       - name: The grammar is generated, not hand-edited
         run: node tools/fork.mjs --check
 
-      # 2. Every assertion holds against the shipped grammar.
+      # 2. Every path the manifest contributes resolves — the grammar, the language
+      #    configuration, and (EXT4) the language icon. A broken icon path draws nothing
+      #    and reports nothing, so it needs a check of its own.
+      - name: The manifest's paths exist
+        run: node tests/manifest.mjs
+
+      # 3. Every assertion holds against the shipped grammar.
       - name: Assertions
         run: node tests/grammar.mjs
 
-      # 3. The red case: the assertions this fork adds all fail against the unmodified
+      # 4. The red case: the assertions this fork adds all fail against the unmodified
       #    upstream grammar, and the controls all pass. A gate nobody has seen red is
       #    not a gate, so the red run is a step and not a paragraph.
       - name: The red case
         run: node tests/red-case.mjs
 
-      # 4. A .vsix builds — the manifest is valid and the package is not empty.
+      # 5. A .vsix builds — the manifest is valid and the package is not empty.
       - name: Package
         run: npx --yes @vscode/vsce package
