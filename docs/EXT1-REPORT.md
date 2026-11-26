@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | repository | **`~/work/tension-vscode`**, branch `main`, `git init`, **no remote, nothing pushed** |
-| commits | **7** (`7f24f80` … `482897c`) |
+| commits | one per logical step — 8 when this was written; `git log --oneline` is authoritative and grows with documentation |
 | gate | `npm test` → **17 assertions over 5 fixtures**, plus the red case: **8/8 added assertions fail on upstream, 9/9 controls pass** |
 | package | **`tension-vscode-0.0.1.vsix`**, 5 files, **20,074 bytes** |
 | install | **`code --install-extension` succeeded**, output quoted in §7 |
@@ -186,8 +186,10 @@ LICENCE  README.md  .vscodeignore  .gitignore
 .github/workflows/grammar.yml      the gate as CI
 ```
 
+The substantive commits, oldest first; anything added after this report is
+documentation and changes none of the measurements below.
+
 ```
-$ git log --oneline
 482897c docs: the EXT1 report, and exact line numbers for the primitive block
 ad6f5fa ci: run the grammar gate on push, on two OSes and two Node versions
 f039328 docs: the modes table, the attribution, and the editor recipe
