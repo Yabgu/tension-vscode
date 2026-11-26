@@ -1,0 +1,54 @@
+# The grammar gate.
+#
+# **This workflow has not run.** The repository has no remote yet (EXT1 §1.2: the user
+# creates it and the seat pushes after), so there is no first green run to link. What
+# this file guarantees is that the day it is pushed, the gate runs on every push and
+# pull request — the same three steps `npm test` runs locally, with the same exit codes.
+#
+# It needs no credentials, no marketplace access and no GUI: `vscode-textmate` and
+# `vscode-oniguruma` run the same engine VS Code's editor core uses, headless, over the
+# fixtures in `tests/fixtures/`.
+
+name: grammar
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  grammar:
+    name: "Grammar (${{ matrix.os }}, node ${{ matrix.node }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install
+        run: npm ci --no-audit || npm install --no-audit --no-fund
+
+      # 1. The shipped grammar is what tools/fork.mjs produces from vendor/. A hand edit
+      #    to syntaxes/ that was not made in the generator fails here.
+      - name: The grammar is generated, not hand-edited
+        run: node tools/fork.mjs --check
+
+      # 2. Every assertion holds against the shipped grammar.
+      - name: Assertions
+        run: node tests/grammar.mjs
+
+      # 3. The red case: the assertions this fork adds all fail against the unmodified
+      #    upstream grammar, and the controls all pass. A gate nobody has seen red is
+      #    not a gate, so the red run is a step and not a paragraph.
+      - name: The red case
+        run: node tests/red-case.mjs
+
+      # 4. A .vsix builds — the manifest is valid and the package is not empty.
+      - name: Package
+        run: npx --yes @vscode/vsce package
