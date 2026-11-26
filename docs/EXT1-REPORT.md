@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | repository | **`~/work/tension-vscode`**, branch `main`, `git init`, **no remote, nothing pushed** |
-| commits | **6** (`7f24f80` … `ad6f5fa`) |
+| commits | **7** (`7f24f80` … `482897c`) |
 | gate | `npm test` → **17 assertions over 5 fixtures**, plus the red case: **8/8 added assertions fail on upstream, 9/9 controls pass** |
 | package | **`tension-vscode-0.0.1.vsix`**, 5 files, **20,074 bytes** |
 | install | **`code --install-extension` succeeded**, output quoted in §7 |
@@ -188,6 +188,7 @@ LICENCE  README.md  .vscodeignore  .gitignore
 
 ```
 $ git log --oneline
+482897c docs: the EXT1 report, and exact line numbers for the primitive block
 ad6f5fa ci: run the grammar gate on push, on two OSes and two Node versions
 f039328 docs: the modes table, the attribution, and the editor recipe
 9ed107e feat: contribute the 'tension' language, its grammar and its editor behaviour
