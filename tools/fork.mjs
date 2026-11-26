@@ -26,6 +26,13 @@
 //   5. one include prepended to `#type`'s patterns, and the rule it includes:
 //      the compiler's scalar primitives as `support.type.primitive.tension`
 //
+// EXT2 added four more repository keys and four one-line includes:
+//
+//   6. `#tension-decorator`   — the compiler's twelve decorator names, scoped by family
+//   7. `#tension-fixed-array` — `[T * n]`, which upstream reads as a tuple
+//   8. `#tension-task-type`   — `Task`, `TaskBase`, `TaskPolicy`, `TaskRecord`
+//   9. `#tension-compiler-library-import` — the string of a `~lib/…` import
+//
 // Everything else — the MIT header fields, all 146 repository rules, every scope
 // suffix — is upstream, byte for byte.
 
@@ -92,6 +99,142 @@ const onRule = {
   captures: { 1: { name: "keyword.control.task-policy.tension" } },
 };
 
+/**
+ * **The compiler's decorators, by family** (EXT2).
+ *
+ * The set is `DecoratorKind.fromNode` (`TensionScript/src/ast.ts:1279-1360`), which has
+ * **twelve** names where the brief listed eight — `atomic`, `global`, `unsafe` and
+ * `external.js` are real compiler decorators too, and are counted in `src/`+`std/`.
+ * Each family is named so a theme can colour it apart from the others; the brief's
+ * point is that the scope carries the class, and TextMate has only the name to carry it
+ * with.
+ *
+ * **Why one rule per name and not an alternation with `$1`:** a capture cannot produce a
+ * different scope per alternative without backreference substitution in `name`, and a
+ * rule that silently stops substituting would miscolour a whole family. Twelve small
+ * rules are longer and unambiguous.
+ *
+ * The lookbehind is `@`, because upstream's `#decorator` consumes the `@` as its
+ * `punctuation.decorator.ts` and then asks `#expression` what the name is — which is why
+ * `@final` currently scopes as `variable.other.readwrite.ts`. Prepending this rule inside
+ * `#decorator` puts it before `#expression` and nothing else changes.
+ *
+ * `(?!\.)` and `(?!\.js)` keep `@external.js` from being read as `@external` followed
+ * by a property, and `(?!…)` on the bare names keeps `@unmanagedThing` out (a
+ * look-alike decorator is a control in `tests/fixtures/decorators.tension`).
+ */
+const DECORATORS = [
+  // memory family — what a value is in memory, and how it is accessed
+  // (`docs/memory-model.md:10-14` for the value/view/heap split; `docs/atomics.md:71`
+  // calls `@atomic` "an access modifier").
+  { name: "unmanaged", scope: "storage.modifier.memory.unmanaged.tension" },
+  { name: "managed", scope: "storage.modifier.memory.managed.tension" },
+  { name: "inline", scope: "storage.modifier.memory.inline.tension" },
+  { name: "lazy", scope: "storage.modifier.memory.lazy.tension" },
+  { name: "atomic", scope: "storage.modifier.memory.atomic.tension" },
+  // ABI family — the host boundary.
+  { name: "external.js", scope: "storage.modifier.abi.external.js.tension" },
+  { name: "external", scope: "storage.modifier.abi.external.tension" },
+  // operator family — `@operator("[]")` and its three named forms (ast.ts:1352-1358).
+  { name: "operator.binary", scope: "storage.modifier.operator.binary.tension" },
+  { name: "operator.prefix", scope: "storage.modifier.operator.prefix.tension" },
+  { name: "operator.postfix", scope: "storage.modifier.operator.postfix.tension" },
+  { name: "operator", scope: "storage.modifier.operator.tension" },
+  // plain — compiler directives that are not about memory, the ABI or an operator.
+  { name: "final", scope: "storage.modifier.final.tension" },
+  { name: "builtin", scope: "storage.modifier.builtin.tension" },
+  { name: "global", scope: "storage.modifier.global.tension" },
+  { name: "unsafe", scope: "storage.modifier.unsafe.tension" },
+];
+
+const decoratorRule = {
+  patterns: DECORATORS.map(({ name, scope }) => ({
+    match: `(?<=@)(${name.replace(/\./g, "\\.")})(?![_$[:alnum:].])`,
+    captures: { 1: { name: scope } },
+  })),
+};
+
+/**
+ * **The fixed-size array `[T * n]`** (EXT2).
+ *
+ * Upstream has no such type, so `[` opens `#type-tuple` and the extent reads as a
+ * number: measured before this rule, `pos: [f64 * 3]` gave
+ * `meta.type.tuple.ts meta.brace.square.ts` / no scope for `*` / `constant.numeric.decimal.ts`
+ * for `3`.
+ *
+ * **The begin is a lookahead, and that is what keeps tuples working.** `\[` is only
+ * claimed when the run to the closing `]` contains `* <digits>`; a `[A, B]` tuple has no
+ * `*` and is left to upstream. The optional nested pair in the lookahead lets the outer
+ * bracket of `[[u8 * 2] * 3]` claim too — one level, which is what the corpus has.
+ *
+ * Stated limitation: deeper nesting (`[[[T * 1] * 2] * 3]`) matches its innermost two
+ * levels only; TextMate has no balanced-bracket matching to reach further.
+ */
+const fixedArrayRule = {
+  name: "meta.type.array.fixed.tension",
+  begin: "\\[(?=[^\\[\\]]*(?:\\[[^\\[\\]]*\\])?[^\\[\\]]*\\*\\s*\\d+\\s*\\])",
+  beginCaptures: { 0: { name: "punctuation.definition.array.begin.tension" } },
+  end: "\\]",
+  endCaptures: { 0: { name: "punctuation.definition.array.end.tension" } },
+  patterns: [
+    { match: "\\*", name: "keyword.operator.array-length.tension" },
+    { match: "\\d+", name: "constant.numeric.array-length.tension" },
+    { include: "#type" },
+  ],
+};
+
+/**
+ * **The task types** (EXT2) — `std/assembly/task.ts`'s two classes and its policy base.
+ *
+ * `TaskRecord` is included because guests import it beside `Task`
+ * (`tests/fixtures/rt-guards.tension:26`, verbatim from a real guest) and a grammar that
+ * knew `Task` but not `TaskRecord` would be half a fact.
+ *
+ * `(?!\.)` keeps `x.Task` a property; the rule lives inside `#type`, so a variable
+ * named `Task` — which compiles, measured — is untouched.
+ */
+const taskTypeRule = {
+  match:
+    "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(Task|TaskBase|TaskPolicy|TaskRecord)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))",
+  captures: { 1: { name: "support.type.task.tension" } },
+};
+
+/**
+ * **The string of a `~lib/…` import** (EXT2).
+ *
+ * `~lib/task` is not a module path; it is the compiler's own `std/assembly/task.ts`,
+ * resolved by the compiler rather than the filesystem — 14 guests import from
+ * `~lib/thread` and 7 from `~lib/task`. A reader deserves to see that these are library
+ * imports and not files next door.
+ *
+ * Matched inside `#import-declaration`, before `#string`, and only for the two quote
+ * styles the corpus uses. `from "./sibling"` keeps its ordinary scope, which is a control
+ * assertion.
+ */
+const compilerLibraryImportRule = {
+  patterns: [
+    // Double-quoted — the form all 21 real `~lib/…` imports use.
+    {
+      match: '(")(~lib/[^"\n]*)(")',
+      captures: {
+        1: { name: "string.quoted.double.import.compiler-library.tension punctuation.definition.string.begin.tension" },
+        2: { name: "string.quoted.double.import.compiler-library.tension" },
+        3: { name: "string.quoted.double.import.compiler-library.tension punctuation.definition.string.end.tension" },
+      },
+    },
+    // Single-quoted, for symmetry with upstream's two string rules. No guest in the
+    // corpus uses this form — stated in the report rather than implied by a rule.
+    {
+      match: "(')(~lib/[^'\\n]*)(')",
+      captures: {
+        1: { name: "string.quoted.single.import.compiler-library.tension punctuation.definition.string.begin.tension" },
+        2: { name: "string.quoted.single.import.compiler-library.tension" },
+        3: { name: "string.quoted.single.import.compiler-library.tension punctuation.definition.string.end.tension" },
+      },
+    },
+  ],
+};
+
 function build() {
   const upstream = JSON.parse(readFileSync(upstreamPath, "utf8"));
 
@@ -121,6 +264,39 @@ function build() {
     ...upstream.repository.type.patterns,
   ];
   upstream.repository["tension-primitive-type"] = primitiveRule;
+
+  // 6: decorators, before upstream's `#expression` can read the name as an identifier —
+  // and also inside `#type`, because TensionScript writes decorators **on types**
+  // (`@unmanaged [u32 * 4]`, `@managed Heap`), which upstream has no rule for: measured
+  // before this include, `\`@managed Heap\`` scoped `managed` as `entity.name.type.ts`
+  // and left the `@` unscoped. The lookbehind makes the pattern inert anywhere a name is
+  // not preceded by `@`, so including it in `#type` cannot claim a plain type name.
+  upstream.repository["tension-decorator"] = decoratorRule;
+  upstream.repository.decorator.patterns = [
+    { include: "#tension-decorator" },
+    ...upstream.repository.decorator.patterns,
+  ];
+
+  // 7: `[T * n]`, before `#type-tuple` claims the bracket.
+  upstream.repository["tension-fixed-array"] = fixedArrayRule;
+  upstream.repository.type.patterns = [
+    { include: "#tension-fixed-array" },
+    ...upstream.repository.type.patterns,
+  ];
+
+  // 8: the task types, after the primitives and before the generic `#type-name`.
+  upstream.repository["tension-task-type"] = taskTypeRule;
+  const typePatterns = upstream.repository.type.patterns;
+  const taskAt = typePatterns.findIndex((p) => p.include === "#comment");
+  typePatterns.splice(taskAt, 0, { include: "#tension-task-type" });
+  typePatterns.splice(taskAt, 0, { include: "#tension-decorator" });
+
+  // 9: `~lib/…` import strings, before `#string` matches them as ordinary strings.
+  upstream.repository["tension-compiler-library-import"] = compilerLibraryImportRule;
+  upstream.repository["import-declaration"].patterns = [
+    { include: "#tension-compiler-library-import" },
+    ...upstream.repository["import-declaration"].patterns,
+  ];
 
   return upstream;
 }
