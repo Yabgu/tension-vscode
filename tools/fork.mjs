@@ -64,6 +64,14 @@ const PRIMITIVES = [
   "i8", "i16", "i32", "i64", "isize",
   "u8", "u16", "u32", "u64", "usize",
   "bool", "f32", "f64",
+  // **`v128`, added by EXT4.** EXT2 omitted it deliberately ("a SIMD vector, not a
+  // scalar annotation, and appears in no guest"), and that reasoning was wrong in the
+  // way this round exists to catch: it is in `CommonNames` (`src/common.ts:132`) and a
+  // user can write it — measured, `struct S { v: v128; }` **compiles** (90 bytes). With
+  // the compiler accepting it and the grammar not listing it, `v128` fell through to
+  // `entity.name.type.ts`: a type, but not the primitive scope every other numeric name
+  // gets. `f16` does not exist in `src/` at all and is not listed.
+  "v128",
 ];
 
 /**
@@ -235,6 +243,62 @@ const compilerLibraryImportRule = {
   ],
 };
 
+/**
+ * **`struct` and its body** (EXT4).
+ *
+ * `struct` is a real keyword — `src/tokenizer.ts:323` returns `Token.Struct` and
+ * `src/parser.ts:515` parses it — but **no file under `tension-core/tests/programs/`
+ * used it**, so EXT1's and EXT2's fixtures never exercised it and the grammar inherited
+ * upstream TypeScript, which has no `struct`. Measured with the shipped grammar before
+ * this rule:
+ *
+ *   export   keyword.control.export.ts
+ *   struct   variable.other.readwrite.alias.ts     <- a variable
+ *   Vec3     variable.other.readwrite.alias.ts     <- a variable
+ *   x        variable.other.readwrite.alias.ts     <- no field scope
+ *   f32      variable.other.readwrite.alias.ts     <- a variable, not a type
+ *
+ * **Why it looked fine.** EXT2 proved the primitive rule fires in a *class* body
+ * (`kind: i32` → `support.type.primitive.tension`), because upstream established
+ * `meta.field.declaration` + `meta.type.annotation` there. A struct body got neither, so
+ * the primitive rule in `#type` had nothing to be included into. Class bodies working is
+ * exactly why every fixture passed.
+ *
+ * **The body is upstream's, not a copy of it.** `struct` delegates to
+ * `parseClassOrInterface` in the compiler, so what a struct accepts *is* what a class
+ * accepts minus inheritance — measured: generics compile, methods compile, `@unmanaged`
+ * and `@managed` compile, `extends` is refused with `AS100 Not implemented: inheritance
+ * on an @inline struct`. So this rule reuses `#class-or-interface-body` via
+ * `#class-declaration-or-expression-patterns` unchanged, and every scope inside the body
+ * (field declarations, method signatures, parameter and return annotations, nested
+ * types) is upstream's own. The only new scopes are the keyword and the name.
+ *
+ * The name rule comes first, with a lookbehind on `struct`, so it claims the identifier
+ * and the generic `entity.name.type.class.ts` rule after it does not.
+ */
+const structRule = {
+  name: "meta.struct.tension",
+  begin:
+    "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(\\bexport)\\s+)?(?:(\\bdeclare)\\s+)?\\b(struct)\\b(?=\\s+|/[/*])",
+  // `export` and `declare` are captured on the **begin match**, not by a pattern
+  // inside: the begin consumes them, so an inner rule would never see the position.
+  // Measured — the first version scoped `export` as nothing at all.
+  beginCaptures: {
+    1: { name: "keyword.control.export.ts" },
+    2: { name: "storage.modifier.ts" },
+    3: { name: "storage.type.struct.tension" },
+  },
+  end: "(?<=\\})",
+  patterns: [
+    { include: "#comment" },
+    {
+      match: "(?<=\\bstruct\\s+)[_$[:alpha:]][_$[:alnum:]]*",
+      captures: { 0: { name: "entity.name.type.struct.tension" } },
+    },
+    { include: "#class-declaration-or-expression-patterns" },
+  ],
+};
+
 function build() {
   const upstream = JSON.parse(readFileSync(upstreamPath, "utf8"));
 
@@ -290,6 +354,15 @@ function build() {
   const taskAt = typePatterns.findIndex((p) => p.include === "#comment");
   typePatterns.splice(taskAt, 0, { include: "#tension-task-type" });
   typePatterns.splice(taskAt, 0, { include: "#tension-decorator" });
+
+  // 10: `struct`, first in `#declaration`. It must precede `#export-declaration`,
+  // which is what claimed `export struct …` and wrapped the whole file in
+  // `meta.export.ts` with no body rule at all.
+  upstream.repository["tension-struct"] = structRule;
+  upstream.repository.declaration.patterns = [
+    { include: "#tension-struct" },
+    ...upstream.repository.declaration.patterns,
+  ];
 
   // 9: `~lib/…` import strings, before `#string` matches them as ordinary strings.
   upstream.repository["tension-compiler-library-import"] = compilerLibraryImportRule;
