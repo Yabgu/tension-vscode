@@ -1,0 +1,58 @@
+// **`struct` and everything the compiler accepts inside one** (EXT4).
+//
+// The user's report, verbatim: *"struct is not highlighted … anything inside structs
+// are not highlighted like f32 and i8 etc types are not highlighted."* Both halves are
+// the same defect: upstream TypeScript has no `struct`, so the keyword read as a variable
+// and the body got no field-declaration or type-annotation scope at all — and the
+// primitive rule lives inside `#type`, so it had nothing to be included into.
+//
+// **What a struct accepts was measured, not assumed.** `src/parser.ts:515` parses it with
+// `parseClassOrInterface`, so the body is a class body, and each construct below was
+// compiled with the vendored compiler (0.14.1, `113fdd24`) before being written here:
+//
+//   plain struct, exported struct   -> compile
+//   generic `struct Ptr<T>`         -> compile
+//   method / getter in the body     -> compile (the declaration; a *call* through an
+//                                      @inline struct value is refused by AS100, because
+//                                      a value has no address — so nothing below calls one)
+//   `@unmanaged struct` / `@managed struct` -> compile
+//   `struct X extends Y`            -> REFUSED: `AS100 Not implemented: inheritance on an
+//                                      @inline struct (a value type is final)`
+//   struct declared inside a function -> REFUSED: `TS1109 Expression expected`
+//
+// So the fixture scopes the keyword, the name, and a body containing every construct the
+// compiler does accept: fields, a method, a getter, a generic parameter list, and a
+// user-declared type in field position. Inheritance is absent because it does not exist.
+//
+// **Compiled**, with the vendored compiler, both ways the field set needs:
+//
+//   node bin/tensionscript.js struct-body.ten -o /tmp/sb.wasm --enable simd
+//   -> COMPILED, 2913 bytes
+//
+// `--enable simd` is required by the `v128` field and by nothing else; without it the
+// compiler refuses with `AS103 Feature 'simd' is not enabled`.
+
+export struct Vec3 {
+  x: f32;
+  y: f32;
+  z: f32;
+  simd: v128;                      // a SIMD vector: `CommonNames`, src/common.ts:132.
+                                   // It needs the `simd` feature: without it the
+                                   // compiler answers `AS103 Feature 'simd' is not
+                                   // enabled`, and this fixture is compiled with
+                                   // `--enable simd` (2913 bytes).
+}
+
+// A second struct, with the constructs that are not just fields.
+@unmanaged struct Rec<T> {
+  count: i8;
+  total: u64;
+  owner: Vec3;                     // a user-declared type in field position
+  scaled(k: f32): f32 { return k; }
+  get first(): i8 { return this.count; }
+}
+
+export function entry(): i32 {
+  let v = new Vec3();
+  return v.x > 0.0 ? 1 : 0;
+}

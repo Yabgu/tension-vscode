@@ -1,0 +1,26 @@
+// **The primitives in every type position a user writes** (EXT4, Phase C).
+//
+// EXT2 added `i8|i16|i32|i64|isize|u8|u16|u32|u64|usize|bool|f32|f64` and asserted them
+// in a parameter annotation, a return, a type argument and a field — four positions, from
+// four fixtures. The user's report was about a *fifth* position (a struct field), which is
+// why this file exists: not because the set was wrong, but because the coverage was
+// narrower than the set.
+//
+// The set itself is `CommonNames` (`src/common.ts:117-133`), which carries one name EXT2
+// left out — `v128` — and `isNumeric` (`src/inference.ts:202`) agrees on the thirteen
+// numeric ones. `f16` appears nowhere in `src/`.
+//
+// **Compiled** (0.14.1, `113fdd24`): `COMPILED, 5489 bytes`.
+//
+// Every position below is asserted: parameter, return, cast, type argument, annotation.
+
+function take(a: i8, b: u64): f64 {
+  return <f64>a + <f64>b;                 // a cast: `cast.expr.ts`
+}
+
+export function entry(): i32 {
+  let typed: Array<u32> = new Array<u32>(4);   // a type argument
+  let n: i32 = changetype<i32>(0);             // a type argument, again
+  let s: i16 = 1;                              // an annotation
+  return take(1, 2) > 0.0 && s == 1 && n == 0 && typed.length == 4 ? 1 : 0;
+}

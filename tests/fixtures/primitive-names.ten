@@ -1,0 +1,24 @@
+// **The primitives' names, used as ordinary names** (EXT4, Phase C controls).
+//
+// `i32` and `f32` are type *names*, not reserved words. The compiler accepts a variable
+// called `f32` and a class called `i32`, and the grammar must keep both as ordinary
+// identifiers — if the primitive rule matched by text anywhere instead of inside `#type`,
+// a program that names a variable `f32` (natural when porting numeric code) would look
+// wrong on every line.
+//
+// **Compiled** (0.14.1, `113fdd24`): `COMPILED, 4874 bytes`.
+//
+// A note on why `entry` does not also *use* `i32` as a type: inside a file that declares
+// `class i32`, that name shadows the primitive — measured, `let n: i32 = 1;` beside this
+// class answers `TS2322 Type 'i32' is not assignable to type 'primitive-names.ten/i32'`.
+// That is the compiler agreeing with the claim: the two spellings are one name in one
+// scope, and only position tells you which is meant.
+
+class i32 {
+  a: u8 = 1;                          // `i32` here is a class name; `u8` is a type
+}
+
+export function entry(): u8 {
+  let f32: u8 = 1;                    // `f32` here is a variable
+  return f32 + new i32().a;           // …and read as one
+}
