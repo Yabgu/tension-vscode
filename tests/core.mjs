@@ -124,6 +124,40 @@ const fixture = (name) => readFileSync(join(fixtures, `${name}.stderr.txt`), "ut
   ok(viaPath.ok, "PATH is the last rung and must still work");
   eq(viaPath.via, "path", "PATH is last");
 
+  // 2e-bis. **Windows spellings, on whatever host runs this test.** Two defects lived
+  //     here and both were found by CI on Windows only, with Linux green on the same
+  //     commit: `path.join` spelled candidates `bin\\tensionscript.js`, and
+  //     `path.delimiter` is `:` on POSIX — which turns a Windows PATH into `C`, `\\tools;D`.
+  //     These assertions pin the platform-independent answer so neither can come back.
+  {
+    const winFs = {
+      exists: (p) => p === "C:/work/TensionScript-a2/bin/tensionscript.js",
+      isDirectory: () => false,
+      readdir: (p) => (p === "C:/work" ? ["Tension", "TensionScript-a2"] : []),
+    };
+    const winWorkspace = discoverCompiler({
+      workspaceFolder: "C:\\work\\Tension",
+      pathEnv: "",
+      isWindows: true,
+      fs: winFs,
+    });
+    ok(winWorkspace.ok, "a backslash-spelled workspace must find its sibling");
+    eq(winWorkspace.path, "C:/work/TensionScript-a2/bin/tensionscript.js", "one spelling, both platforms");
+
+    const winPath = discoverCompiler({
+      workspaceFolder: "C:/work/Tension",
+      pathEnv: "C:\\tools;D:\\bin",
+      isWindows: true,
+      fs: {
+        exists: (p) => p === "C:/tools/tensionscript.cmd",
+        isDirectory: () => false,
+        readdir: () => [],
+      },
+    });
+    ok(winPath.ok, "a semicolon PATH must be split on semicolons, not on ':'");
+    eq(winPath.path, "C:/tools/tensionscript.cmd", "and the .cmd suffix is tried");
+  }
+
   // 2f. The flags are the project's, read from its own build scripts — not invented.
   const args = checkArgs("game.ten", "/tmp/out.wasm");
   ok(args.includes("--runtime") && args.includes("incremental"), "--runtime incremental");

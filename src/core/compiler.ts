@@ -79,10 +79,31 @@ export const SETTING = "tension.compilerPath";
  */
 const CLI_RELATIVE = "bin/tensionscript.js";
 
-/** Join with `/`, so a candidate path reads the same on every host. */
+/**
+ * Join with `/`, so a candidate path reads the same on every host.
+ *
+ * Backslashes in the base are folded to `/` as well: `C:\\w\\Tension` and `C:/w/Tension`
+ * are the same directory to Node on Windows, and only one of them compares equal to a
+ * string written the other way.
+ */
 function relay(base: string, ...parts: string[]): string {
-  const trimmed = base.replace(/[\\/]+$/, "");
+  const trimmed = base.replace(/\\/g, "/").replace(/\/+$/, "");
   return [trimmed, ...parts].join("/");
+}
+
+/**
+ * The directory above `path`, as pure string work.
+ *
+ * **Not `resolve(path, "..")`**, which consults the *host's* idea of a root and returns
+ * `\\work` for `/work/Tension` on Windows. That made the sibling rung host-dependent, which
+ * is the same defect as the separator one one line up: a Windows CI job failed the sibling
+ * assertion while Linux passed.
+ */
+function parentOf(path: string): string {
+  const normalized = path.replace(/\\/g, "/").replace(/\/+$/, "");
+  const cut = normalized.lastIndexOf("/");
+  if (cut < 0) return normalized;
+  return cut === 0 ? "/" : normalized.slice(0, cut);
 }
 
 /**
@@ -119,7 +140,7 @@ export function discoverCompiler(input: DiscoverInput = {}): CompilerFound {
     // 3. A sibling checkout — the layout every round of this project has used:
     //    ~/work/Tension next to ~/work/TensionScript-a2. The trailing `*` is because the
     //    checkout is named `TensionScript-a2` here and `TensionScript` elsewhere.
-    const parent = resolve(input.workspaceFolder, "..");
+    const parent = parentOf(input.workspaceFolder);
     tried.push(`sibling ${parent}/TensionScript*/${CLI_RELATIVE}`);
     const siblings = fs
       .readdir(parent)
@@ -135,7 +156,12 @@ export function discoverCompiler(input: DiscoverInput = {}): CompilerFound {
   //    in this project vended, so it is last and it is still not a guess: the name is
   //    exact and the file must exist.
   const exts = isWindows ? [".cmd", ".exe", ".bat", ""] : [""];
-  for (const dir of (input.pathEnv ?? process.env.PATH ?? "").split(delimiter)) {
+  // **The delimiter follows `isWindows`, not the host.** `path.delimiter` is `:` on POSIX
+  // and `;` on Windows, so splitting a Windows PATH with the host's delimiter turns
+  // `C:\\tools;D:\\bin` into `C`, `\\tools;D`, `\\bin` — measured here, and it silently
+  // finds nothing on a machine that has the compiler.
+  const pathSeparator = isWindows ? ";" : delimiter;
+  for (const dir of (input.pathEnv ?? process.env.PATH ?? "").split(pathSeparator)) {
     if (dir.length === 0) continue;
     for (const ext of exts) {
       const candidate = relay(dir, `tensionscript${ext}`);
