@@ -1,0 +1,14 @@
+# What a user installs is the grammar, the language configuration and the manifest.
+# The test harness, the vendored upstream copy and the fork script are development
+# material: they are in the repository, and they do not belong in the package.
+.vscode/**
+tests/**
+tools/**
+vendor/**
+node_modules/**
+docs/**
+.github/**
+*.vsix
+.gitignore
+.vscodeignore
+package-lock.json

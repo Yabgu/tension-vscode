@@ -1,0 +1,59 @@
+{
+  "name": "tension-vscode",
+  "displayName": "TensionScript",
+  "description": "Syntax highlighting and editor behaviour for TensionScript guest sources (.tension, .ten).",
+  "version": "0.0.1",
+  "publisher": "tension",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "tension",
+    "tensionscript",
+    "wasm",
+    "webassembly",
+    "assemblyscript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yabgu/tension-vscode"
+  },
+  "scripts": {
+    "test": "node tools/fork.mjs --check && node tests/grammar.mjs && node tests/red-case.mjs",
+    "grammar": "node tools/fork.mjs",
+    "tokenize": "node tests/tokenize.mjs",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "tension",
+        "aliases": [
+          "TensionScript",
+          "tension"
+        ],
+        "extensions": [
+          ".tension",
+          ".ten"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tension",
+        "scopeName": "source.tension",
+        "path": "./syntaxes/tension.tmLanguage.json"
+      }
+    ]
+  }
+}
